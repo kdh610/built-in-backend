@@ -65,12 +65,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             memberRepository.save(member);
 
-            UserDTO userDTO = new UserDTO();
-            userDTO.setId(member.getId());
-            userDTO.setUsername(username);
-            userDTO.setEmail(email);
-            userDTO.setName(oAuth2Response.getName());
-            userDTO.setRole("ROLE_USER");
+            UserDTO userDTO = UserDTO.builder()
+                    .id(member.getId())
+                    .username(username)
+                    .email(email)
+                    .name(oAuth2Response.getName())
+                    .role("ROLE_USER")
+                    .build();
 
 
             return new CustomOAuth2User(userDTO);
@@ -86,12 +87,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // oauth로 가입한 경우 바로 로그인 진행
             else{
                 log.info("OAuth 가입하기로 등록된 이메일");
-                UserDTO userDTO = new UserDTO();
-                userDTO.setId(existData.getId());
-                userDTO.setUsername(username);
-                userDTO.setEmail(email);
-                userDTO.setName(oAuth2Response.getName());
-                userDTO.setRole("ROLE_USER");
+                UserDTO userDTO = UserDTO.builder()
+                        .id(existData.getId())
+                        .username(username)
+                        .email(email)
+                        .name(oAuth2Response.getName())
+                        .role("ROLE_USER")
+                        .build();
 
                 return new CustomOAuth2User(userDTO);
 
