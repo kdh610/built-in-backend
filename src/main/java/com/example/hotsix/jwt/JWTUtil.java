@@ -77,7 +77,7 @@ public class JWTUtil {
         return false;
     }
 
-    public Boolean isAccessToken(String token){
+    public Boolean isTokenTypeAccess(String token){
         String category = getCategory(token);
 
         if(!category.equals("access")) {

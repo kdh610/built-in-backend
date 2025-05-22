@@ -27,7 +27,6 @@ public class ReissueController {
 
     private final JWTUtil jwtUtil;
     private final LogoutService logoutService;
-    //private final RedisTemplate<String ,String> redisTemplate;
 
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
@@ -46,7 +45,6 @@ public class ReissueController {
         if(refresh ==null){
             log.info("refresh is null");
             throw new BuiltInException(Process.INVALID_TOKEN);
-            //return new ResponseEntity<>("refresh token is null", HttpStatus.BAD_REQUEST);
         }
 
         try {
@@ -54,7 +52,6 @@ public class ReissueController {
         }catch (ExpiredJwtException e){
             log.info("refresh token is expired");
             throw new BuiltInException(Process.EXPIRED_TOKEN);
-            //return new ResponseEntity<>("refresh token is expired", HttpStatus.BAD_REQUEST);
         }
 
         String category = jwtUtil.getCategory(refresh);
@@ -62,14 +59,12 @@ public class ReissueController {
         if(!category.equals("refresh")){
             log.info("refresh token is invalid");
             throw new BuiltInException(Process.INVALID_TOKEN);
-            //return new ResponseEntity<>("refresh token is invalid", HttpStatus.BAD_REQUEST);
         }
 
         // 레디스에 리프레시토큰없을때
         if( !logoutService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
             log.info("만료된 리프레시토큰");
             throw new BuiltInException(Process.EXPIRED_TOKEN);
-            //return new ResponseEntity<>("invalid refresh token", HttpStatus.BAD_REQUEST);
         }
 
 
@@ -90,7 +85,6 @@ public class ReissueController {
 
         String newAccess = jwtUtil.createAccessToken(memberDto, accessExpiretime);
 
-        //response.setHeader("access", newAccess);
         response.setHeader("Authorization", "Bearer " + newAccess);
 
         return new ResponseEntity<>(HttpStatus.OK);

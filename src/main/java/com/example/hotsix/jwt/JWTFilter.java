@@ -9,7 +9,6 @@ import com.example.hotsix.oauth.dto.CustomOAuth2User;
 import com.example.hotsix.oauth.dto.UserDTO;
 import com.example.hotsix.service.auth.LogoutService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -29,7 +28,6 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
-    //private final RedisTemplate<String, String> redisTemplate;
     private final LogoutService logoutService;
 
     @Override
@@ -57,12 +55,12 @@ public class JWTFilter extends OncePerRequestFilter {
         String authorization = getAccessTokenFromHeader(request);
 
         //일반 헤더 요청
-        if(isAccessTokenRequest(authorization, refreshToken)){
+        if(isNormalRequest(authorization, refreshToken)){
             accessToken = authorization;
             try{
                 isBlackListToken(accessToken);
                 jwtUtil.validateToken(accessToken);
-                jwtUtil.isAccessToken(accessToken);
+                jwtUtil.isTokenTypeAccess(accessToken);
             }catch (BuiltInException e){
                 jwtExceptionHandler(response,e);
                 return;
@@ -114,7 +112,7 @@ public class JWTFilter extends OncePerRequestFilter {
         return refreshToken != null && authorization == null;
     }
 
-    private static boolean isAccessTokenRequest(String authorization, String refreshToken) {
+    private static boolean isNormalRequest(String authorization, String refreshToken) {
         return authorization != null && refreshToken == null;
     }
 
