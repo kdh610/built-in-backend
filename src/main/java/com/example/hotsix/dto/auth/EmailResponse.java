@@ -3,7 +3,6 @@ package com.example.hotsix.dto.auth;
 import lombok.*;
 
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

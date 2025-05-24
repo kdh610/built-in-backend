@@ -5,7 +5,7 @@ import com.example.hotsix.dto.common.ErrorResponse;
 import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
-import com.example.hotsix.service.auth.LogoutService;
+import com.example.hotsix.service.auth.RedisTokentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -17,21 +17,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
 public class CustomLogoutFilter extends GenericFilterBean {
 
     private final JWTUtil jwtUtil;
-    private final LogoutService logoutService;
+    private final RedisTokentService redisTokentService;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -62,7 +57,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
             log.info("access토큰 블랙리스트 처리");
             try{
                 long remainingTime = jwtUtil.getRemainingTime(access);
-                logoutService.blacklistAccessToken(access, remainingTime);
+                redisTokentService.blacklistAccessToken(access, remainingTime);
                 //redisTemplate.opsForValue().set(access,"logout", remainingTime, TimeUnit.MILLISECONDS);
             }catch (ExpiredJwtException e){
                 //response body
@@ -100,14 +95,14 @@ public class CustomLogoutFilter extends GenericFilterBean {
             return;
         }
 
-        if(!logoutService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
+        if(!redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
         // 리프레시 토큰 삭제
         log.info("Redis refresh토큰 삭제");
-        logoutService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
+        redisTokentService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
 
         //리프레시 토큰 쿠키 값 0
         Cookie cookie = new Cookie("refresh",null);
