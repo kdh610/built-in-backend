@@ -6,13 +6,11 @@ import com.example.hotsix.jwt.JWTFilter;
 import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.oauth.CustomSuccessHandler;
 import com.example.hotsix.oauth.CustomOAuth2UserService;
-import com.example.hotsix.service.auth.LogoutService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.example.hotsix.service.auth.RedisTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,7 +38,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     //private final RedisTemplate<String ,String> redisTemplate;
-    private final LogoutService logoutService;
+    private final RedisTokenService logoutService;
 
     @Value("${client.host}")
     private String clientHost;
