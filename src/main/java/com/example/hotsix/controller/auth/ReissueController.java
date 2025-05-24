@@ -2,6 +2,9 @@
 package com.example.hotsix.controller.auth;
 
 
+import com.example.hotsix.dto.auth.ReissueResponse;
+import com.example.hotsix.dto.common.APIResponse;
+import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
@@ -32,7 +35,7 @@ public class ReissueController {
     private Long accessExpiretime;
 
     @PostMapping("/reissue")
-    public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
+    public ReissueResponse reissue(HttpServletRequest request, HttpServletResponse response) {
         log.info("reissue");
         String refresh = null;
         Cookie[] cookies = request.getCookies();
@@ -41,6 +44,7 @@ public class ReissueController {
                 refresh = cookie.getValue();
             }
         }
+        log.info("refresh: {}", refresh);
 
         if(refresh ==null){
             log.info("refresh is null");
@@ -55,7 +59,7 @@ public class ReissueController {
         }
 
         String category = jwtUtil.getCategory(refresh);
-
+log.info("category: {}", category);
         if(!category.equals("refresh")){
             log.info("refresh token is invalid");
             throw new BuiltInException(Process.INVALID_TOKEN);
@@ -84,12 +88,13 @@ public class ReissueController {
 
 
         String newAccess = jwtUtil.createAccessToken(memberDto, accessExpiretime);
-
+log.info("newAccess: {}", newAccess);
         response.setHeader("Authorization", "Bearer " + newAccess);
 
-        return new ResponseEntity<>(HttpStatus.OK);
 
-
+        return ReissueResponse.builder()
+                .token(newAccess)
+                .build();
     }
 
 

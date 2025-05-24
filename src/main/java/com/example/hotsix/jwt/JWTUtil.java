@@ -63,13 +63,13 @@ public class JWTUtil {
             }
         }catch (SecurityException | MalformedJwtException e) {
             log.error("유효하지 않는 JWT 토큰 입니다. {}",e.getMessage());
-            throw new BuiltInException(com.example.hotsix.enums.Process.INVALID_TOKEN);
+            throw new BuiltInException(Process.INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
             log.error("만료된 JWT 토큰 입니다.");
-            throw new BuiltInException(com.example.hotsix.enums.Process.EXPIRED_TOKEN);
+            throw new BuiltInException(Process.EXPIRED_TOKEN);
         } catch (UnsupportedJwtException e) {
             log.error("지원되지 않는 JWT 토큰 입니다.");
-            throw new BuiltInException(com.example.hotsix.enums.Process.INVALID_TOKEN);
+            throw new BuiltInException(Process.INVALID_TOKEN);
         } catch (IllegalArgumentException e) {
             log.error("잘못된 JWT 토큰 입니다.");
             throw new BuiltInException(Process.INVALID_TOKEN);

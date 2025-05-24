@@ -1,18 +1,23 @@
 package com.example.hotsix.jwt;
 
 import com.example.hotsix.dto.member.MemberDto;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.example.hotsix.exception.BuiltInException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
-@SpringBootTest
-public class JwtTest {
 
-    @Autowired
+@AutoConfigureMockMvc
+public class JwtUtilTest {
+
     private JWTUtil jwtUtil;
+
+   @BeforeEach
+   void setJwtUtil(){
+       jwtUtil = new JWTUtil("test-scret-key-20223235-Lim-Dong-Gil-Kang-Min-Seo");
+   }
 
 
     @Test
@@ -25,8 +30,8 @@ public class JwtTest {
                 .build();
 
         String accessToken = jwtUtil.createAccessToken(member, 10000000L);
-        Boolean expired = jwtUtil.validateToken(accessToken);
-        Assertions.assertFalse(expired);
+        String name = jwtUtil.getName(accessToken);
+        Assertions.assertEquals(name, "Test");
     }
 
     @Test
@@ -46,16 +51,19 @@ public class JwtTest {
             throw new RuntimeException(e);
         }
 
-        Assertions.assertThrows(ExpiredJwtException.class, () -> jwtUtil.validateToken(accessToken));
+        Assertions.assertThrows(BuiltInException.class, () -> jwtUtil.validateToken(accessToken));
     }
 
 
     @Test
     @DisplayName("잘못된 Jwt 테스트")
     void validateWrongJwt(){
-        Assertions.assertFalse(
+        Assertions.assertThrows(
+                BuiltInException.class,() ->
                 jwtUtil.validateToken("eyJhbGciOiJIUeI1NvJ9.eyJuYW1lIjoiVGVzdCIsImVtYWlsIjoidGVzdEBnbWFpbC5jb20iLCJjYXRlZ29yeSI6ImFjY2VzcyIsImlhdCI6MTc0NzkxODA0MSwiZXhwIjoxNzQ3OTE4MDQyfQ.DFRY-NNwhej3Mvbgjz2zeiX2GuC4Wzk-3H1L-ggFqC8"));
     }
+
+
 
 
 }

@@ -186,7 +186,6 @@ public class JWTFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
-        return;
     }
 
     public void jwtExceptionHandler(HttpServletResponse response, BuiltInException error) {
@@ -204,9 +203,8 @@ public class JWTFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         try {
             String json = new ObjectMapper().writeValueAsString(apiResponse);
-            log.info("json: {}", json);
             response.getWriter().write(json);
-            return;
+
         } catch (Exception e) {
             log.error(e.getMessage());
         }
