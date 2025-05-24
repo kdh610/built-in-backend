@@ -6,13 +6,11 @@ import com.example.hotsix.jwt.JWTFilter;
 import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.oauth.CustomSuccessHandler;
 import com.example.hotsix.oauth.CustomOAuth2UserService;
-import com.example.hotsix.service.auth.LogoutService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.example.hotsix.service.auth.RedisTokentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,7 +38,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     //private final RedisTemplate<String ,String> redisTemplate;
-    private final LogoutService logoutService;
+    private final RedisTokentService redisTokentService;
 
     @Value("${client.host}")
     private String clientHost;
@@ -72,10 +70,10 @@ public class SecurityConfig {
 
         // JWTFilter 추가   UsernamePasswordFilter 이전에 등록
         http
-                .addFilterBefore(new JWTFilter(jwtUtil, logoutService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JWTFilter(jwtUtil, redisTokentService), UsernamePasswordAuthenticationFilter.class);
         // 로그아웃
         http
-                .addFilterBefore(new CustomLogoutFilter(jwtUtil, logoutService), LogoutFilter.class);
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil, redisTokentService), LogoutFilter.class);
 
         // oauth2
         http

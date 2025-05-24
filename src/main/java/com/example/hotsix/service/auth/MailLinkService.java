@@ -1,6 +1,8 @@
 package com.example.hotsix.service.auth;
 
 import com.example.hotsix.jwt.JWTUtil;
+import com.example.hotsix.model.Member;
+import com.example.hotsix.repository.member.MemberRepository;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,21 +20,25 @@ import static org.springframework.security.core.context.SecurityContextHolder.se
 @RequiredArgsConstructor
 public class MailLinkService {
 
+    private final MemberRepository memberRepository;
     private final JWTUtil jwtUtil;
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
-    @Value("${client.host}")
+    @Value("${server.origin}")
     private String hostUrl;
 
     public String createLink(String type, String email){
         String code = jwtUtil.createEmailJwt(email);
-        log.info(code);
-        //링크는 서버주소로 해야함. 서버의 /register나 /email-login api로 들어와서 code의 토큰을 검증해줘야
-        // 클라이언트의 /afterlogin이나 /register 페이지로 보냄.
-        String link = hostUrl+"/hot6man/"+ type + "?code="+code;
-//        String link = "http://localhost:8080/hot6man/"+ type + "?code="+code;
-        return link;
+        return  hostUrl+"/hot6man/"+ type + "?code="+code;
+    }
+
+    public String choiceLoginOrRegister(String email){
+        Member exist = memberRepository.findByEmail(email.replace("\"", ""));
+        if(exist != null){
+            return "email-login";
+        }
+        return "register";
     }
 
     public void sendMail(String email, String type, String link){

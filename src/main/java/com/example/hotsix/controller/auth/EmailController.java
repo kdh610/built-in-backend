@@ -6,7 +6,7 @@ import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.model.Member;
 import com.example.hotsix.repository.member.MemberRepository;
 import com.example.hotsix.service.auth.LoginService;
-import com.example.hotsix.service.auth.LogoutService;
+import com.example.hotsix.service.auth.RedisTokentService;
 import com.example.hotsix.service.auth.MailLinkService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
@@ -28,35 +28,22 @@ public class EmailController {
     private final MemberRepository memberRepository;
     private final LoginService loginService;
     private final JWTUtil jwtUtil;
-    private final LogoutService logoutService;
+    private final RedisTokentService redisTokentService;
 
     @Value("${client.host}")
     private String clinetHost;
 
-    // 링크를 생성하고 메일로 보내줌
     @PostMapping("/email-link")
     public EmailResponse emailLink(@RequestBody String email) {
-        log.info(email);
-        Member exist = memberRepository.findByEmail(email.replace("\"", ""));
-        log.info("exist: {}", exist);
-        String link = null;
-        EmailResponse emailResponse = null;
-        //이미 존재하는 이메일
-        if(exist != null) {
-            link = mailLinkService.createLink("email-login", email);
-            mailLinkService.sendMail(email, "login", link);
-            emailResponse = EmailResponse.builder()
-                    .link(link)
-                    .type("login")
-                    .build();
-        }else{
-            link = mailLinkService.createLink("register", email);
-            mailLinkService.sendMail(email, "register", link);
-            emailResponse = EmailResponse.builder()
-                    .link(link)
-                    .type("register")
-                    .build();
-        }
+        String type = mailLinkService.choiceLoginOrRegister(email);
+        String link = mailLinkService.createLink(type, email);
+        mailLinkService.sendMail(email,type,link);
+
+        EmailResponse emailResponse = EmailResponse.builder()
+                .link(link)
+                .type(type)
+                .build();
+
         return emailResponse;
     }
 
@@ -73,10 +60,10 @@ public class EmailController {
         }catch (JwtException e){
             log.info(e.getMessage());
             try {
-                if(refresh!=null && logoutService.isTokenInRedis(jwtUtil.getId(refresh.getValue()).toString())){
+                if(refresh!=null && redisTokentService.isTokenInRedis(jwtUtil.getId(refresh.getValue()).toString())){
                     // 리프레시 토큰 삭제
                     log.info("Redis refresh토큰 삭제");
-                    logoutService.deleteRefreshToken(jwtUtil.getId(refresh.getValue()).toString());
+                    redisTokentService.deleteRefreshToken(jwtUtil.getId(refresh.getValue()).toString());
 
                     //리프레시 토큰 쿠키 값 0
                     Cookie cookie = new Cookie("refresh",null);

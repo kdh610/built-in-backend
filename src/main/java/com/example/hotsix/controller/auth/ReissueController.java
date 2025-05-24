@@ -3,13 +3,11 @@ package com.example.hotsix.controller.auth;
 
 
 import com.example.hotsix.dto.auth.ReissueResponse;
-import com.example.hotsix.dto.common.APIResponse;
-import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.jwt.JWTUtil;
-import com.example.hotsix.service.auth.LogoutService;
+import com.example.hotsix.service.auth.RedisTokentService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,8 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,7 +25,7 @@ public class ReissueController {
 
 
     private final JWTUtil jwtUtil;
-    private final LogoutService logoutService;
+    private final RedisTokentService redisTokentService;
 
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
@@ -66,7 +62,7 @@ log.info("category: {}", category);
         }
 
         // 레디스에 리프레시토큰없을때
-        if( !logoutService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
+        if( !redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
             log.info("만료된 리프레시토큰");
             throw new BuiltInException(Process.EXPIRED_TOKEN);
         }

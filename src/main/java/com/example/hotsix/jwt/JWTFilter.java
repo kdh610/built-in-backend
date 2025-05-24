@@ -7,7 +7,7 @@ import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.oauth.dto.CustomOAuth2User;
 import com.example.hotsix.oauth.dto.UserDTO;
-import com.example.hotsix.service.auth.LogoutService;
+import com.example.hotsix.service.auth.RedisTokentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,7 +28,7 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
-    private final LogoutService logoutService;
+    private final RedisTokentService redisTokentService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -41,8 +41,6 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
         String requestURL = request.getRequestURI();
-
-
         if (requestURL.startsWith("/hot6man/swagger-ui.html") ||
                 requestURL.startsWith("/hot6man/swagger-ui/") ||
                 requestURL.startsWith("/hot6man/v3/api-docs")) {
@@ -50,30 +48,22 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
-        String accessToken = null;
-        String refreshToken = getRefreshToken(request);
-        String authorization = getAccessTokenFromHeader(request);
 
-        //일반 헤더 요청
-        if(isNormalRequest(authorization, refreshToken)){
-            accessToken = authorization;
-            try{
-                isBlackListToken(accessToken);
-                jwtUtil.validateToken(accessToken);
-                jwtUtil.isTokenTypeAccess(accessToken);
-            }catch (BuiltInException e){
-                jwtExceptionHandler(response,e);
-                return;
-            }
+        String refreshToken = getRefreshToken(request);
+        String accessToken = getAccessTokenFromHeader(request);
+        log.info("accessToken: {}", accessToken);
+        log.info("refreshToken: {}", refreshToken);
+
+        if(isGeneralRequest(accessToken, refreshToken)){
+            if (validateAccessToken(response, accessToken)) return;
             setSecurityContext(request, response, filterChain, accessToken);
             return;
         }
-        else if(isReissueRequest(refreshToken, authorization)){
+        else if(isReissueRequest(refreshToken, accessToken)){
             filterChain.doFilter(request, response);
             return;
         }
-        else if(refreshToken != null && authorization != null){
-            accessToken = authorization;
+        else if(refreshToken != null && accessToken != null){
             try {
                 if (jwtUtil.validateToken(accessToken)) {
                     setSecurityContext(request, response, filterChain, accessToken);
@@ -100,34 +90,41 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-
-
     }
 
-    private static boolean isLoginOrSignUpRequest(String accessToken, String refreshToken) {
-        return accessToken == null && refreshToken == null;
+    private boolean validateAccessToken(HttpServletResponse response, String accessToken) {
+        try{
+            isBlackListToken(accessToken);
+            jwtUtil.validateToken(accessToken);
+            jwtUtil.isTokenTypeAccess(accessToken);
+        }catch (BuiltInException e){
+            jwtExceptionHandler(response,e);
+            return true;
+        }
+        return false;
+    }
+
+    private void isBlackListToken(String accessToken) {
+        if(redisTokentService.isTokenInRedis(accessToken)) {
+            throw new BuiltInException(Process.INVALID_TOKEN);
+        }
+    }
+
+    private static boolean isGeneralRequest(String authorization, String refreshToken) {
+        return authorization != null && refreshToken == null;
     }
 
     private static boolean isReissueRequest(String refreshToken, String authorization) {
         return refreshToken != null && authorization == null;
     }
 
-    private static boolean isNormalRequest(String authorization, String refreshToken) {
-        return authorization != null && refreshToken == null;
+    private static boolean isLoginOrSignUpRequest(String accessToken, String refreshToken) {
+        return accessToken == null && refreshToken == null;
     }
-
-    private void isBlackListToken(String accessToken) {
-        if(accessToken !=null && logoutService.isTokenInRedis(accessToken)) {
-            log.info("로그아웃된 access token");
-            throw new BuiltInException(Process.INVALID_TOKEN);
-        }
-    }
-
 
     private String getAccessTokenFromHeader(HttpServletRequest request) {
         return request.getHeader("Authorization");
     }
-
 
     private String getAccessToeknFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
@@ -143,7 +140,6 @@ public class JWTFilter extends OncePerRequestFilter {
         return null;
     }
 
-
     private String getRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -157,16 +153,14 @@ public class JWTFilter extends OncePerRequestFilter {
         return null;
     }
 
-
     private void setSecurityContext(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String accessToken) throws IOException, ServletException {
         log.info("인증완료 SecurityContextHolder 설정");
-        //토큰에서 id, username과 role 획득
+
         String username = jwtUtil.getUsername(accessToken);
         String role = jwtUtil.getRole(accessToken);
         Long id = jwtUtil.getId(accessToken);
         String name = jwtUtil.getName(accessToken);
 
-        //userDTO를 생성하여 값 set
         UserDTO userDTO = UserDTO.builder()
                 .username(username)
                 .role(role)
@@ -177,7 +171,6 @@ public class JWTFilter extends OncePerRequestFilter {
         //UserDetails에 회원 정보 객체 담기
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(userDTO);
         log.info("customOAuth2User: {}", customOAuth2User);
-        //스프링 시큐리티 인증 토큰 생성
 
         Authentication authToken = new UsernamePasswordAuthenticationToken(customOAuth2User, null, customOAuth2User.getAuthorities());
         log.info("authToken: {}", authToken.getPrincipal().toString());
@@ -209,5 +202,5 @@ public class JWTFilter extends OncePerRequestFilter {
             log.error(e.getMessage());
         }
     }
- 
+
 }
