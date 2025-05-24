@@ -1,0 +1,44 @@
+
+spring:
+  application:
+    name: hotsix
+
+  datasource:
+    hikari:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+      # Local Test용
+      jdbc-url: jdbc:mysql://localhost:3306/ssafy?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
+      username: ssafy
+      password: ssafy
+      pool-name: hikari-pool
+      maximum-pool-size: 50
+      minimum-idle: 50
+      connection-timeout: 5000
+      connection-init-sql: SELECT 1
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+jwt:
+  salt: our-screte-key-20240514-Lim-Dong-Gil-Kang-Min-Seo
+  refresh-token:
+    expiretime: 259200000000
+  #    expiretime: 300000
+  access-token:
+    expiretime: 60000
+#    expiretime: 2592000000
+
+
+redis:
+  #  host: redis-${SERVICE_NUM}
+  host: 127.0.0.1
+  password: ""
+  port: 6379

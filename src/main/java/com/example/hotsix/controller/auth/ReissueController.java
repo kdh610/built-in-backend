@@ -2,6 +2,9 @@
 package com.example.hotsix.controller.auth;
 
 
+import com.example.hotsix.dto.auth.ReissueResponse;
+import com.example.hotsix.dto.common.APIResponse;
+import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
@@ -27,13 +30,12 @@ public class ReissueController {
 
     private final JWTUtil jwtUtil;
     private final LogoutService logoutService;
-    //private final RedisTemplate<String ,String> redisTemplate;
 
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
 
     @PostMapping("/reissue")
-    public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
+    public ReissueResponse reissue(HttpServletRequest request, HttpServletResponse response) {
         log.info("reissue");
         String refresh = null;
         Cookie[] cookies = request.getCookies();
@@ -42,11 +44,11 @@ public class ReissueController {
                 refresh = cookie.getValue();
             }
         }
+        log.info("refresh: {}", refresh);
 
         if(refresh ==null){
             log.info("refresh is null");
             throw new BuiltInException(Process.INVALID_TOKEN);
-            //return new ResponseEntity<>("refresh token is null", HttpStatus.BAD_REQUEST);
         }
 
         try {
@@ -54,22 +56,19 @@ public class ReissueController {
         }catch (ExpiredJwtException e){
             log.info("refresh token is expired");
             throw new BuiltInException(Process.EXPIRED_TOKEN);
-            //return new ResponseEntity<>("refresh token is expired", HttpStatus.BAD_REQUEST);
         }
 
         String category = jwtUtil.getCategory(refresh);
-
+log.info("category: {}", category);
         if(!category.equals("refresh")){
             log.info("refresh token is invalid");
             throw new BuiltInException(Process.INVALID_TOKEN);
-            //return new ResponseEntity<>("refresh token is invalid", HttpStatus.BAD_REQUEST);
         }
 
         // 레디스에 리프레시토큰없을때
         if( !logoutService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
             log.info("만료된 리프레시토큰");
             throw new BuiltInException(Process.EXPIRED_TOKEN);
-            //return new ResponseEntity<>("invalid refresh token", HttpStatus.BAD_REQUEST);
         }
 
 
@@ -89,13 +88,13 @@ public class ReissueController {
 
 
         String newAccess = jwtUtil.createAccessToken(memberDto, accessExpiretime);
-
-        //response.setHeader("access", newAccess);
+log.info("newAccess: {}", newAccess);
         response.setHeader("Authorization", "Bearer " + newAccess);
 
-        return new ResponseEntity<>(HttpStatus.OK);
 
-
+        return ReissueResponse.builder()
+                .token(newAccess)
+                .build();
     }
 
 

@@ -20,4 +20,10 @@ public class APIResponse<T> {
         this.process = process;
         this.data = data;
     }
+
+    public static <T> APIResponse<T> success(ProcessResponse process, T data){
+        return APIResponse.<T>builder()
+                .process(process)
+                .data(data).build();
+    }
 }

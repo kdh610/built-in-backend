@@ -57,7 +57,6 @@ public class EmailController {
                     .type("register")
                     .build();
         }
-        //mailLinkService.sendMail(email, "login", link);
         return emailResponse;
     }
 
