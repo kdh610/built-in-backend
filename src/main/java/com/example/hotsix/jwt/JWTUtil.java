@@ -7,6 +7,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -72,6 +73,8 @@ public class JWTUtil {
             throw new BuiltInException(Process.INVALID_TOKEN);
         } catch (IllegalArgumentException e) {
             log.error("잘못된 JWT 토큰 입니다.");
+            throw new BuiltInException(Process.INVALID_TOKEN);
+        }catch (SignatureException e){
             throw new BuiltInException(Process.INVALID_TOKEN);
         }
         return false;

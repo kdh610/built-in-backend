@@ -7,7 +7,7 @@ import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.oauth.dto.CustomOAuth2User;
 import com.example.hotsix.oauth.dto.UserDTO;
-import com.example.hotsix.service.auth.LogoutService;
+import com.example.hotsix.service.auth.RedisTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,7 +28,7 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
-    private final LogoutService logoutService;
+    private final RedisTokenService logoutService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
