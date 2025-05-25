@@ -81,11 +81,20 @@ public class JWTUtil {
         String category = getCategory(token);
 
         if(!category.equals("access")) {
-            log.info("카테고리가 access가 아니다");
             throw new BuiltInException(Process.INVALID_TOKEN);
         }
         return true;
     }
+
+    public Boolean isTokenTypeRefresh(String token){
+        String category = getCategory(token);
+
+        if(!category.equals("refresh")) {
+            throw new BuiltInException(Process.INVALID_TOKEN);
+        }
+        return true;
+    }
+
 
     public long getRemainingTime(String token) {
         Date expiration1 = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration();
