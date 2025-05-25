@@ -1,12 +1,13 @@
 package com.example.hotsix.controller.auth;
 
 import com.example.hotsix.dto.auth.EmailResponse;
+import com.example.hotsix.dto.auth.SignUpRequest;
 import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.jwt.JWTUtil;
-import com.example.hotsix.model.Member;
 import com.example.hotsix.service.auth.LoginService;
 import com.example.hotsix.service.auth.MailLinkService;
+import com.example.hotsix.service.auth.SignUpService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class EmailController {
 
     private final MailLinkService mailLinkService;
     private final LoginService loginService;
+    private final SignUpService signUpService;
     private final JWTUtil jwtUtil;
 
 
@@ -84,8 +86,10 @@ public class EmailController {
     }
 
     @PostMapping(value = "/signup", consumes = "application/json;charset=UTF-8")
-    public MemberDto signup(@RequestBody MemberDto member){
-        MemberDto memberDto = loginService.signUp(Member.fromDto(member));
+    public MemberDto signup(@RequestBody SignUpRequest signUpRequest){
+        signUpRequest.setRole("ROLE_USER");
+        signUpRequest.setLgnMtd("built-in");
+        MemberDto memberDto = signUpService.signUp(signUpRequest);
         return memberDto;
     }
 

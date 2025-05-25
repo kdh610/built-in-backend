@@ -93,7 +93,7 @@ public class ReissueControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.process").exists())
                 .andExpect(jsonPath("$.process.statusCode").value(401))
-                .andExpect(jsonPath("$.process.message").value("유효기간이 만료된 Token입니다."))
+                .andExpect(jsonPath("$.process.message").value("잘못된 JWT Token 입니다."))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
     }
@@ -128,7 +128,7 @@ public class ReissueControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.process").exists())
                 .andExpect(jsonPath("$.process.statusCode").value(401))
-                .andExpect(jsonPath("$.process.message").value("유효기간이 만료된 Token입니다."))
+                .andExpect(jsonPath("$.process.message").value("잘못된 JWT Token 입니다."))
                 .andExpect(jsonPath("$.data").doesNotExist());
     }
 

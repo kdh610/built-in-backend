@@ -1,5 +1,6 @@
 package com.example.hotsix.model;
 
+import com.example.hotsix.dto.auth.SignUpRequest;
 import com.example.hotsix.dto.member.MemberDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -104,19 +105,16 @@ public class Member extends BaseEntity {
     }
 
 
-
-    @Override
-    public String toString() {
-        return "Member{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", nickname='" + nickname + '\'' +
-                ", profileUrl='" + profileUrl + '\'' +
-                ", phone='" + phone + '\'' +
-                ", address='" + address + '\'' +
-                ", role='" + role + '\'' +
-                ", lgnMtd='" + lgnMtd + '\'' +
-                '}';
+    public static Member createSignupMember(SignUpRequest signUpRequest){
+        return Member.builder()
+                .email(signUpRequest.getEmail())
+                .nickname(signUpRequest.getNickname())
+                .name(signUpRequest.getName())
+                .profileUrl(signUpRequest.getProfileUrl())
+                .phone(signUpRequest.getPhone())
+                .address(signUpRequest.getAddress())
+                .role(signUpRequest.getRole())
+                .lgnMtd(signUpRequest.getLgnMtd())
+                .build();
     }
 }
