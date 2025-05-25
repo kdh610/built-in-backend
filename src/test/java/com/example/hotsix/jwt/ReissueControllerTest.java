@@ -2,7 +2,7 @@ package com.example.hotsix.jwt;
 
 import com.example.hotsix.controller.auth.ReissueController;
 import com.example.hotsix.dto.member.MemberDto;
-import com.example.hotsix.service.auth.RedisTokentService;
+import com.example.hotsix.service.auth.RedisTokenService;
 import com.example.hotsix.service.storage.StorageService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +32,7 @@ public class ReissueControllerTest {
     @MockBean
     private JWTUtil jwtUtil;
     @MockBean
-    private RedisTokentService redisTokentService;
+    private RedisTokenService redisTokenService;
     @MockBean
     private StorageService storageService;
     @MockBean
@@ -58,7 +58,7 @@ public class ReissueControllerTest {
         Mockito.when(jwtUtil.getRole(refreshToken)).thenReturn(expectedRole);
         Mockito.when(jwtUtil.getName(refreshToken)).thenReturn(expectedName);
         Mockito.when(jwtUtil.getEmail(refreshToken)).thenReturn(expectedEmail);
-        Mockito.when(redisTokentService.isTokenInRedis("1")).thenReturn(true);
+        Mockito.when(redisTokenService.isTokenInRedis("1")).thenReturn(true);
         Mockito.when(jwtUtil.createAccessToken(any(MemberDto.class), anyLong()))
                 .thenReturn(newAccessToken);
 
@@ -116,7 +116,7 @@ public class ReissueControllerTest {
         Mockito.when(jwtUtil.getRole(refreshToken)).thenReturn(expectedRole);
         Mockito.when(jwtUtil.getName(refreshToken)).thenReturn(expectedName);
         Mockito.when(jwtUtil.getEmail(refreshToken)).thenReturn(expectedEmail);
-        Mockito.when(redisTokentService.isTokenInRedis("1")).thenReturn(false);
+        Mockito.when(redisTokenService.isTokenInRedis("1")).thenReturn(false);
         Mockito.when(jwtUtil.createAccessToken(any(MemberDto.class), anyLong()))
                 .thenReturn(newAccessToken);
 
