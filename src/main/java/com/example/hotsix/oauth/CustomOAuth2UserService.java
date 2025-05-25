@@ -56,7 +56,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if(findMember == null){
             log.info("신규 가입 이메일");
-            MemberDto memberDto = signUpService.signUp(SignUpRequest.builder()
+            MemberDto memberDto = signUpService.signUpByOauth(SignUpRequest.builder()
                         .email(email)
                         .nickname(oAuth2Response.getName())
                         .name(oAuth2Response.getName())
@@ -73,7 +73,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .build());
         }
         else{
-            if(isEmailSignUp(findMember)){
+            if(isSignUpByEmail(findMember)){
                 log.info("이메일 가입하기로 등록된 이메일");
                 return null;
             }
@@ -90,7 +90,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
     }
 
-    private static boolean isEmailSignUp(Member findMember) {
+    private static boolean isSignUpByEmail(Member findMember) {
         return findMember.getLgnMtd().equals("built-in");
     }
 }

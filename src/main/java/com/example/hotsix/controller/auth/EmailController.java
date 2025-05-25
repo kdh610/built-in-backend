@@ -87,9 +87,7 @@ public class EmailController {
 
     @PostMapping(value = "/signup", consumes = "application/json;charset=UTF-8")
     public MemberDto signup(@RequestBody SignUpRequest signUpRequest){
-        signUpRequest.setRole("ROLE_USER");
-        signUpRequest.setLgnMtd("built-in");
-        MemberDto memberDto = signUpService.signUp(signUpRequest);
+        MemberDto memberDto = signUpService.signUpByEmail(signUpRequest);
         return memberDto;
     }
 
