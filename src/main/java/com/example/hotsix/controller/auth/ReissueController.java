@@ -18,6 +18,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -33,43 +36,18 @@ public class ReissueController {
     @PostMapping("/reissue")
     public ReissueResponse reissue(HttpServletRequest request, HttpServletResponse response) {
         log.info("reissue");
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if(cookie.getName().equals("refresh")){
-                refresh = cookie.getValue();
-            }
-        }
-        log.info("refresh: {}", refresh);
+        String refresh = getToeknFromCookie(request).orElseThrow(() -> new BuiltInException(Process.INVALID_TOKEN));
+        validateRefreshToken(refresh);
 
-        if(refresh ==null){
-            log.info("refresh is null");
-            throw new BuiltInException(Process.INVALID_TOKEN);
-        }
+        String newAccess = reissueAcessToken(refresh);
+        response.setHeader("Authorization", "Bearer " + newAccess);
 
-        try {
-            jwtUtil.validateToken(refresh);
-        }catch (ExpiredJwtException e){
-            log.info("refresh token is expired");
-            throw new BuiltInException(Process.EXPIRED_TOKEN);
-        }
+        return ReissueResponse.builder()
+                .token(newAccess)
+                .build();
+    }
 
-        String category = jwtUtil.getCategory(refresh);
-log.info("category: {}", category);
-        if(!category.equals("refresh")){
-            log.info("refresh token is invalid");
-            throw new BuiltInException(Process.INVALID_TOKEN);
-        }
-
-        // 레디스에 리프레시토큰없을때
-        if( !redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
-            log.info("만료된 리프레시토큰");
-            throw new BuiltInException(Process.EXPIRED_TOKEN);
-        }
-
-
-        log.info("Access토큰 재발행");
-        String username = jwtUtil.getUsername(refresh);
+    private String reissueAcessToken(String refresh) {
         String role = jwtUtil.getRole(refresh);
         Long id= jwtUtil.getId(refresh);
         String name = jwtUtil.getName(refresh);
@@ -82,16 +60,33 @@ log.info("category: {}", category);
                 .role(role)
                 .build();
 
-
-        String newAccess = jwtUtil.createAccessToken(memberDto, accessExpiretime);
-log.info("newAccess: {}", newAccess);
-        response.setHeader("Authorization", "Bearer " + newAccess);
-
-
-        return ReissueResponse.builder()
-                .token(newAccess)
-                .build();
+        return jwtUtil.createAccessToken(memberDto, accessExpiretime);
     }
 
+    private void validateRefreshToken(String refresh) {
+        try {
+            jwtUtil.validateToken(refresh);
+            jwtUtil.isTokenTypeRefresh(refresh);
+            isAleadyLogoutToken(refresh);
+        }catch (BuiltInException e){
+            throw e;
+        }
+    }
+
+    private void isAleadyLogoutToken(String refresh) {
+        if(!redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString()))
+            throw new BuiltInException(Process.INVALID_TOKEN);
+
+    }
+
+    private static Optional<String> getToeknFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        for (Cookie cookie : cookies) {
+            if(cookie.getName().equals("refresh")){
+                return Optional.of(cookie.getValue());
+            }
+        }
+        return Optional.empty();
+    }
 
 }
