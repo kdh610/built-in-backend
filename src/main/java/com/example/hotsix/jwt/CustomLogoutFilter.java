@@ -5,7 +5,7 @@ import com.example.hotsix.dto.common.ErrorResponse;
 import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
-import com.example.hotsix.service.auth.RedisTokentService;
+import com.example.hotsix.service.auth.RedisTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -26,7 +26,7 @@ import java.io.IOException;
 public class CustomLogoutFilter extends GenericFilterBean {
 
     private final JWTUtil jwtUtil;
-    private final RedisTokentService redisTokentService;
+    private final RedisTokenService redisTokenService;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -57,7 +57,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
             log.info("access토큰 블랙리스트 처리");
             try{
                 long remainingTime = jwtUtil.getRemainingTime(access);
-                redisTokentService.blacklistAccessToken(access, remainingTime);
+                redisTokenService.blacklistAccessToken(access, remainingTime);
                 //redisTemplate.opsForValue().set(access,"logout", remainingTime, TimeUnit.MILLISECONDS);
             }catch (ExpiredJwtException e){
                 //response body
@@ -95,14 +95,14 @@ public class CustomLogoutFilter extends GenericFilterBean {
             return;
         }
 
-        if(!redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
+        if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
         // 리프레시 토큰 삭제
         log.info("Redis refresh토큰 삭제");
-        redisTokentService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
+        redisTokenService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
 
         //리프레시 토큰 쿠키 값 0
         Cookie cookie = new Cookie("refresh",null);

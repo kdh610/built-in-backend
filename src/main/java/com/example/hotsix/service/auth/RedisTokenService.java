@@ -8,10 +8,13 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-public class RedisTokentService {
+public class RedisTokenService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
+    public void saveRefreshToken(String keyName, String refreshToken, Long refreshExpiretime) {
+        redisTemplate.opsForValue().set(keyName, refreshToken, refreshExpiretime, TimeUnit.MILLISECONDS);
+    }
 
     public void blacklistAccessToken(String accessToken, Long remainingTime){
         redisTemplate.opsForValue().set(accessToken,"logout", remainingTime, TimeUnit.MILLISECONDS);

@@ -7,8 +7,7 @@ import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.jwt.JWTUtil;
-import com.example.hotsix.service.auth.RedisTokentService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.example.hotsix.service.auth.RedisTokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @RestController
@@ -28,7 +26,7 @@ public class ReissueController {
 
 
     private final JWTUtil jwtUtil;
-    private final RedisTokentService redisTokentService;
+    private final RedisTokenService redisTokenService;
 
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
@@ -74,7 +72,7 @@ public class ReissueController {
     }
 
     private void isAleadyLogoutToken(String refresh) {
-        if(!redisTokentService.isTokenInRedis(jwtUtil.getId(refresh).toString()))
+        if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString()))
             throw new BuiltInException(Process.INVALID_TOKEN);
 
     }

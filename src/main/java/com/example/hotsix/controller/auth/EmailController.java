@@ -38,26 +38,24 @@ public class EmailController {
         String link = mailLinkService.createLink(type, email);
         mailLinkService.sendMail(email,type,link);
 
-        EmailResponse emailResponse = EmailResponse.builder()
+       return EmailResponse.builder()
                 .link(link)
                 .type(type)
                 .build();
-
-        return emailResponse;
     }
 
     @GetMapping("/email-login")
-    public void emailLogin(@RequestParam("code") String code, @CookieValue(value = "refresh", required = false) Cookie refresh, HttpServletResponse response) throws IOException {
+    public void emailLogin(@RequestParam("code") String code, HttpServletResponse response){
         try{
             jwtUtil.validateToken(code);
             String email = jwtUtil.getEmail(code);
 
             if(email != null) {
-                Map<String, Cookie> cookies = loginService.login(email);
+                Map<String, Cookie> cookies = loginService.issueAuthTokensAndCookies(email);
 
                 response.addCookie(cookies.get("access"));
                 response.addCookie(cookies.get("refresh"));
-                response.sendRedirect(clinetHost+"/afterlogin");
+                redirect(response,clinetHost+"/afterlogin");
             }
         }catch (BuiltInException e){
             throw e;
@@ -67,10 +65,9 @@ public class EmailController {
     @GetMapping("/register")
     public void register(@RequestParam("code") String code, HttpServletResponse response){
         try{
-            if(jwtUtil.validateToken(code)){
-                String email = jwtUtil.getEmail(code);
-                redirect(response, "/register?email=" + email.replace("\"", ""));
-            }
+            jwtUtil.validateToken(code);
+            String email = jwtUtil.getEmail(code);
+            redirect(response, "/register?email=" + email.replace("\"", ""));
         }catch (BuiltInException e){
             log.info(e.getMessage());
             redirect(response, "");
@@ -86,9 +83,8 @@ public class EmailController {
     }
 
     @PostMapping(value = "/signup", consumes = "application/json;charset=UTF-8")
-    public MemberDto signup(@RequestBody SignUpRequest signUpRequest){
-        MemberDto memberDto = signUpService.signUpByEmail(signUpRequest);
-        return memberDto;
+    public MemberDto signupByEmail(@RequestBody SignUpRequest signUpRequest){
+        return signUpService.signUpByEmail(signUpRequest);
     }
 
 

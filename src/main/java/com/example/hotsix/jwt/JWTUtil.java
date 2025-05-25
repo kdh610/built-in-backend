@@ -52,8 +52,6 @@ public class JWTUtil {
                 .replace("\"", "");
     }
 
-
-
     public Boolean validateToken(String token) {
         log.info("[JWTUtil] 토큰 만료 검증");
         try {
@@ -79,7 +77,6 @@ public class JWTUtil {
 
     public Boolean isTokenTypeAccess(String token){
         String category = getCategory(token);
-
         if(!category.equals("access")) {
             throw new BuiltInException(Process.INVALID_TOKEN);
         }
@@ -88,31 +85,32 @@ public class JWTUtil {
 
     public Boolean isTokenTypeRefresh(String token){
         String category = getCategory(token);
-
         if(!category.equals("refresh")) {
             throw new BuiltInException(Process.INVALID_TOKEN);
         }
         return true;
     }
 
+    public String getCategory(String token){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
+    }
 
     public long getRemainingTime(String token) {
         Date expiration1 = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration();
-
         long currentTimeMillis = System.currentTimeMillis();
-
-        // 남은 시간 계산 (밀리초 단위)
         long remainingTimeMillis = expiration1.getTime() - currentTimeMillis;
 
         return remainingTimeMillis;
     }
 
-    public String getCategory(String token){
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
+    public String createAccessToken(MemberDto memberDto, Long expiredMs) {
+        return createJwt(memberDto, "access", expiredMs);
     }
 
+    public String createRefreshToken(MemberDto memberDto, Long expiredMs) {
+        return createJwt(memberDto, "refresh", expiredMs);
+    }
 
-    //토큰 생성
     public String createJwt(MemberDto memberDto, String category, Long expiredMs) {
         log.info("[JWTUtil] JWT토큰 생성");
         Long id = memberDto.getId();
@@ -132,7 +130,6 @@ public class JWTUtil {
                 .compact();
     }
 
-
     public String createEmailJwt(String email){
         return Jwts.builder()
                 .claim("email",email)
@@ -141,16 +138,6 @@ public class JWTUtil {
                 .signWith(secretKey)
                 .compact();
     }
-
-
-    public String createAccessToken(MemberDto memberDto, Long expiredMs) {
-        return createJwt(memberDto, "access", expiredMs);
-    }
-
-    public String createRefreshToken(MemberDto memberDto, Long expiredMs) {
-        return createJwt(memberDto, "refresh", expiredMs);
-    }
-
 
 
 

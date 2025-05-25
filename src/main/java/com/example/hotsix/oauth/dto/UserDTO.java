@@ -9,13 +9,9 @@ import lombok.Setter;
 public class UserDTO {
 
     private Long id;
-
     private String role;
-    //사용자 이름
     private String name;
-    //사용자를 특정할 값
     private String username;
-
     private String email;
 
     @Override
