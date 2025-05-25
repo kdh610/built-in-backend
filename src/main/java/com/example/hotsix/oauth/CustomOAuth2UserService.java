@@ -1,9 +1,12 @@
 package com.example.hotsix.oauth;
 
+import com.example.hotsix.dto.auth.SignUpRequest;
+import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.model.Member;
 import com.example.hotsix.oauth.dto.*;
 
 import com.example.hotsix.repository.member.MemberRepository;
+import com.example.hotsix.service.auth.SignUpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
+    private final SignUpService signUpService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -30,9 +34,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         log.info("registrationId: {}", registrationId);
 
-        OAuth2Response oAuth2Response = null;
-
-
+        OAuth2Response oAuth2Response;
         if(registrationId.equals("naver")){
             log.info("naver 로그인");
             oAuth2Response = new NaverResponse(oAuth2User.getAttributes());
@@ -47,60 +49,48 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         //리소스 서버에서 발급 받은 정보로 사용자를 특정할 아이디값
-
         log.info("oAuth2Response: {}", oAuth2Response);
         String username = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
         String email = oAuth2Response.getEmail();
-        Member existData = memberRepository.findByEmail(email);
+        Member findMember = memberRepository.findByEmail(email);
 
-        // 가입한 유저 email이 없을 경우 email DB에 등록하고 로그인
-        if(existData == null){
+        if(findMember == null){
             log.info("신규 가입 이메일");
-            Member member = new Member();
-            member.setEmail(email);
-            member.setNickname(oAuth2Response.getName());
-            member.setName(oAuth2Response.getName());
-            member.setRole("ROLE_USER");
-            member.setLgnMtd(oAuth2Response.getProvider());
+            MemberDto memberDto = signUpService.signUpByOauth(SignUpRequest.builder()
+                        .email(email)
+                        .nickname(oAuth2Response.getName())
+                        .name(oAuth2Response.getName())
+                        .role("ROLE_USER")
+                        .lgnMtd(oAuth2Response.getProvider())
+                        .build());
 
-            memberRepository.save(member);
-
-            UserDTO userDTO = UserDTO.builder()
-                    .id(member.getId())
-                    .username(username)
-                    .email(email)
-                    .name(oAuth2Response.getName())
-                    .role("ROLE_USER")
-                    .build();
-
-
-            return new CustomOAuth2User(userDTO);
-        }
-        //이미 가입한 이메일
-        else{
-            log.info("이미 가입한 이메일");
-            //직접 이메일로 가입한 경우
-            if(existData.getLgnMtd().equals("builtin")){
-                log.info("이메일 가입하기로 등록된 이메일");
-                return null;
-            }
-            // oauth로 가입한 경우 바로 로그인 진행
-            else{
-                log.info("OAuth 가입하기로 등록된 이메일");
-                UserDTO userDTO = UserDTO.builder()
-                        .id(existData.getId())
+            return new CustomOAuth2User(UserDTO.builder()
+                        .id( Member.fromDto(memberDto).getId())
                         .username(username)
                         .email(email)
                         .name(oAuth2Response.getName())
                         .role("ROLE_USER")
-                        .build();
-
-                return new CustomOAuth2User(userDTO);
-
-            }
-
-
+                        .build());
         }
+        else{
+            if(isSignUpByEmail(findMember)){
+                log.info("이메일 가입하기로 등록된 이메일");
+                return null;
+            }
+            else{
+                log.info("OAuth 가입하기로 등록된 이메일");
+                return new CustomOAuth2User(UserDTO.builder()
+                            .id(findMember.getId())
+                            .username(username)
+                            .email(email)
+                            .name(oAuth2Response.getName())
+                            .role("ROLE_USER")
+                            .build());
+            }
+        }
+    }
 
+    private static boolean isSignUpByEmail(Member findMember) {
+        return findMember.getLgnMtd().equals("built-in");
     }
 }
