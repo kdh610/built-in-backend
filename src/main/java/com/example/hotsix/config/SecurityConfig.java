@@ -49,6 +49,14 @@ public class SecurityConfig {
     @Value("${openvidu.url}")
     private String openviduUrl;
 
+    /**
+     * Configures the application's security filter chain, including CORS, CSRF, authentication, authorization, and session management.
+     *
+     * Sets up CORS with custom origins, disables CSRF, form login, and HTTP Basic authentication, and adds custom filters for global exception handling, JWT authentication, and logout. Configures OAuth2 login with custom user service and success handler. Defines authorization rules to permit access to specific endpoints and requires authentication for all others. Sets session management to stateless.
+     *
+     * @return the configured SecurityFilterChain
+     * @throws Exception if an error occurs during security configuration
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 

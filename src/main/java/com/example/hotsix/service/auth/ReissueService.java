@@ -15,6 +15,14 @@ public class ReissueService {
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
 
+    /**
+     * Issues a new access token based on a valid refresh token.
+     *
+     * Validates the provided refresh token, extracts user information, and generates a new access token with the configured expiration time.
+     *
+     * @param refresh the refresh token used to authenticate and extract user details
+     * @return a newly generated access token
+     */
     public String reissueAcessToken(String refresh) {
         jwtUtil.validateRefreshToken(refresh);
 
