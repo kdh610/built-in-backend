@@ -3,14 +3,17 @@ package com.example.hotsix.jwt;
 import com.example.hotsix.dto.member.MemberDto;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
+import com.example.hotsix.service.auth.RedisTokenService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -23,36 +26,55 @@ import java.util.Optional;
 @Slf4j
 public class JWTUtil {
 
-    private SecretKey secretKey;
+    private final RedisTokenService redisTokenService;
+    private final SecretKey secretKey;
 
-    public JWTUtil(@Value("${jwt.salt}")String secret){
-        secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+    public JWTUtil(@Value("${jwt.salt}")String secret, RedisTokenService redisTokenService){
+        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+        this.redisTokenService = redisTokenService;
     }
 
     public String getUsername(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
     }
 
     public String getName(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("name", String.class);
     }
 
     public String getRole(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
     }
 
     public Long getId(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("id", Long.class);
     }
 
     public String getEmail(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("email", String.class)
                 .replace("\"", "");
+    }
+
+    public void validateAccessToken(String accessToken) {
+        isBlackListToken(accessToken);
+        validateToken(accessToken);
+        isTokenTypeAccess(accessToken);
+    }
+
+    public void validateRefreshToken(String refresh) {
+        validateToken(refresh);
+        isTokenTypeRefresh(refresh);
+        isLoggedOutRefreshToken(refresh);
+    }
+
+    private void isLoggedOutRefreshToken(String refresh) {
+        if(!redisTokenService.isTokenInRedis(getId(refresh).toString()))
+            throw new BuiltInException(Process.INVALID_TOKEN);
+    }
+
+    private void isBlackListToken(String accessToken) {
+        if(redisTokenService.isTokenInRedis(accessToken))
+            throw new BuiltInException(Process.INVALID_TOKEN);
     }
 
     public Boolean validateToken(String token) {

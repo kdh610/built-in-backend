@@ -47,7 +47,7 @@ public class EmailController {
     @GetMapping("/email-login")
     public void emailLogin(@RequestParam("code") String code, HttpServletResponse response){
         try{
-            jwtUtil.validateToken(code);
+            jwtUtil.validateAccessToken(code);
             String email = jwtUtil.getEmail(code);
 
             if(email != null) {
@@ -65,7 +65,7 @@ public class EmailController {
     @GetMapping("/register")
     public void register(@RequestParam("code") String code, HttpServletResponse response){
         try{
-            jwtUtil.validateToken(code);
+            jwtUtil.validateAccessToken(code);
             String email = jwtUtil.getEmail(code);
             redirect(response, "/register?email=" + email.replace("\"", ""));
         }catch (BuiltInException e){

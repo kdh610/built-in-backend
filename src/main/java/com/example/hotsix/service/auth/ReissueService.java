@@ -12,12 +12,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ReissueService {
     private final JWTUtil jwtUtil;
-    private final RedisTokenService redisTokenService;
     @Value("${jwt.access-token.expiretime}")
     private Long accessExpiretime;
 
     public String reissueAcessToken(String refresh) {
-        validateRefreshToken(refresh);
+        jwtUtil.validateRefreshToken(refresh);
 
         String role = jwtUtil.getRole(refresh);
         Long id= jwtUtil.getId(refresh);
@@ -31,21 +30,6 @@ public class ReissueService {
                 .build();
 
         return jwtUtil.createAccessToken(memberDto, accessExpiretime);
-    }
-
-    private void validateRefreshToken(String refresh) {
-        try {
-            jwtUtil.validateToken(refresh);
-            jwtUtil.isTokenTypeRefresh(refresh);
-            isLoggedOutToken(refresh);
-        }catch (BuiltInException e){
-            throw e;
-        }
-    }
-
-    private void isLoggedOutToken(String refresh) {
-        if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString()))
-            throw new BuiltInException(Process.INVALID_TOKEN);
     }
 
 }

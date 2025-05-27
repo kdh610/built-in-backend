@@ -48,26 +48,18 @@ public class CustomLogoutFilter extends GenericFilterBean {
             return;
         }
 
-        
-        //  access토큰 redis에 블랙리스트 처리
-        String access = request.getHeader("Authorization");
-        log.info("access: {}", access);
-        if(access != null){
-            log.info("access토큰 블랙리스트 처리");
-            jwtUtil.validateToken(access);
-            long remainingTime = jwtUtil.getRemainingTime(access);
-            redisTokenService.blacklistAccessToken(access, remainingTime);
+        String accessToken = request.getHeader("Authorization");
+        if(accessToken != null){
+            jwtUtil.validateAccessToken(accessToken);
+            long remainingTime = jwtUtil.getRemainingTime(accessToken);
+            redisTokenService.blacklistAccessToken(accessToken, remainingTime);
         }
 
-        String refresh = jwtUtil.getTokenFromCookie(request, TokenType.REFRESH)
+        String refreshToken = jwtUtil.getTokenFromCookie(request, TokenType.REFRESH)
                 .orElseThrow(() -> new BuiltInException(Process.INVALID_TOKEN));
+        jwtUtil.validateRefreshToken(refreshToken);
 
-        if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
-            throw new BuiltInException(Process.INVALID_TOKEN);
-        }
-
-        log.info("Redis refresh토큰 삭제");
-        redisTokenService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
+        redisTokenService.deleteRefreshToken(jwtUtil.getId(refreshToken).toString());
 
         Cookie cookie = new Cookie("refresh",null);
         cookie.setMaxAge(0);

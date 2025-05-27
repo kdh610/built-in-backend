@@ -56,7 +56,7 @@ public class JWTFilter extends OncePerRequestFilter {
         log.info("refreshToken: {}", refreshToken);
 
         if(isGeneralRequest(accessToken, refreshToken)){
-            validateAccessToken(accessToken);
+            jwtUtil.validateAccessToken(accessToken);
             setSecurityContext(request, response, filterChain, accessToken);
             return;
         }
@@ -65,7 +65,7 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
         else if(refreshToken != null && accessToken != null){
-            jwtUtil.validateToken(accessToken);
+            jwtUtil.validateAccessToken(accessToken);
             setSecurityContext(request, response, filterChain, accessToken);
             return;
         }
@@ -87,16 +87,8 @@ public class JWTFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void validateAccessToken(String accessToken) {
-        isBlackListToken(accessToken);
-        jwtUtil.validateToken(accessToken);
-        jwtUtil.isTokenTypeAccess(accessToken);
-    }
-
-    private void isBlackListToken(String accessToken) {
-        if(redisTokenService.isTokenInRedis(accessToken)) {
-            throw new BuiltInException(Process.INVALID_TOKEN);
-        }
+    private String getAccessTokenFromHeader(HttpServletRequest request) {
+        return request.getHeader("Authorization");
     }
 
     private static boolean isGeneralRequest(String authorization, String refreshToken) {
@@ -109,10 +101,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private static boolean isLoginOrSignUpRequest(String accessToken, String refreshToken) {
         return accessToken == null && refreshToken == null;
-    }
-
-    private String getAccessTokenFromHeader(HttpServletRequest request) {
-        return request.getHeader("Authorization");
     }
 
     private void setSecurityContext(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String accessToken) throws IOException, ServletException {
