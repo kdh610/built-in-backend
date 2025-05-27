@@ -1,13 +1,14 @@
-package com.example.hotsix.jwt;
+package com.example.hotsix.jwt.filter;
 
 import com.example.hotsix.dto.common.APIResponse;
 import com.example.hotsix.dto.common.ErrorResponse;
 import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
+import com.example.hotsix.jwt.JWTUtil;
+import com.example.hotsix.jwt.TokenType;
 import com.example.hotsix.service.auth.RedisTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -53,64 +54,29 @@ public class CustomLogoutFilter extends GenericFilterBean {
         log.info("access: {}", access);
         if(access != null){
             log.info("access토큰 블랙리스트 처리");
-            try{
-                jwtUtil.validateToken(access);
-                long remainingTime = jwtUtil.getRemainingTime(access);
-                redisTokenService.blacklistAccessToken(access, remainingTime);
-            }catch (BuiltInException e){
-                log.info("Access 토큰 만료");
-                jwtExceptionHandler(response,e);
-                return;
-            }
+            jwtUtil.validateToken(access);
+            long remainingTime = jwtUtil.getRemainingTime(access);
+            redisTokenService.blacklistAccessToken(access, remainingTime);
         }
 
-
-        String refresh = jwtUtil.getTokenFromCookie(request,TokenType.REFRESH).orElse(null);
-
-        if(refresh==null){
-            response.setStatus(HttpServletResponse.SC_OK);
-            return;
-        }
+        String refresh = jwtUtil.getTokenFromCookie(request, TokenType.REFRESH)
+                .orElseThrow(() -> new BuiltInException(Process.INVALID_TOKEN));
 
         if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString())){
-            response.setStatus(HttpServletResponse.SC_OK);
-            return;
+            throw new BuiltInException(Process.INVALID_TOKEN);
         }
 
-        // 리프레시 토큰 삭제
         log.info("Redis refresh토큰 삭제");
         redisTokenService.deleteRefreshToken(jwtUtil.getId(refresh).toString());
 
-        //리프레시 토큰 쿠키 값 0
         Cookie cookie = new Cookie("refresh",null);
         cookie.setMaxAge(0);
         cookie.setPath("/");
-
         log.info("로그아웃 완료");
         response.addCookie(cookie);
         response.setStatus(HttpServletResponse.SC_OK);
     }
 
-    public void jwtExceptionHandler(HttpServletResponse response, BuiltInException error) {
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .process(error.getProcess())
-                .build();
 
-        APIResponse<Object> apiResponse = APIResponse.builder()
-                .process(ProcessResponse.from(errorResponse.getProcess()))
-                .build();
-
-
-        response.setStatus(errorResponse.getProcess().getHttpStatus().value());
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        try {
-            String json = new ObjectMapper().writeValueAsString(apiResponse);
-            response.getWriter().write(json);
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
 
 }

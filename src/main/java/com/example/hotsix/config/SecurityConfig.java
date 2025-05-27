@@ -1,8 +1,8 @@
 package com.example.hotsix.config;
 
-import com.example.hotsix.jwt.CustomAuthenticationEntryPoint;
-import com.example.hotsix.jwt.CustomLogoutFilter;
-import com.example.hotsix.jwt.JWTFilter;
+import com.example.hotsix.jwt.exception.GlobalBuiltInExceptionHandlerFilter;
+import com.example.hotsix.jwt.filter.CustomLogoutFilter;
+import com.example.hotsix.jwt.filter.JWTFilter;
 import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.oauth.CustomSuccessHandler;
 import com.example.hotsix.oauth.CustomOAuth2UserService;
@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     private final JWTUtil jwtUtil;
 
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final GlobalBuiltInExceptionHandlerFilter globalBuiltInExceptionHandlerFilter;
 
     //private final RedisTemplate<String ,String> redisTemplate;
     private final RedisTokenService redisTokenService;
@@ -68,12 +68,16 @@ public class SecurityConfig {
         http
                 .httpBasic((auth) -> auth.disable());
 
-        // JWTFilter 추가   UsernamePasswordFilter 이전에 등록
         http
-                .addFilterBefore(new JWTFilter(jwtUtil, redisTokenService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(globalBuiltInExceptionHandlerFilter, LogoutFilter.class);
+
         // 로그아웃
         http
                 .addFilterBefore(new CustomLogoutFilter(jwtUtil, redisTokenService), LogoutFilter.class);
+
+        // JWTFilter 추가   UsernamePasswordFilter 이전에 등록
+        http
+                .addFilterBefore(new JWTFilter(jwtUtil, redisTokenService), UsernamePasswordAuthenticationFilter.class);
 
         // oauth2
         http
@@ -83,9 +87,9 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler));
 
         //인증실패시
-        http.
-                exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(customAuthenticationEntryPoint));
+//        http.
+//                exceptionHandling(exceptionHandling -> exceptionHandling
+//                        .authenticationEntryPoint(customAuthenticationEntryPoint));
 
 
         // 경로별 인가 작업
