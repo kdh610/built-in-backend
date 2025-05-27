@@ -37,13 +37,13 @@ public class ReissueService {
         try {
             jwtUtil.validateToken(refresh);
             jwtUtil.isTokenTypeRefresh(refresh);
-            isAleadyLogoutToken(refresh);
+            isLoggedOutToken(refresh);
         }catch (BuiltInException e){
             throw e;
         }
     }
 
-    private void isAleadyLogoutToken(String refresh) {
+    private void isLoggedOutToken(String refresh) {
         if(!redisTokenService.isTokenInRedis(jwtUtil.getId(refresh).toString()))
             throw new BuiltInException(Process.INVALID_TOKEN);
     }
