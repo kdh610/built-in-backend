@@ -31,19 +31,6 @@ public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
     private final RedisTokenService redisTokenService;
 
-    /**
-     * Processes incoming HTTP requests to authenticate users based on JWT access and refresh tokens.
-     *
-     * This filter intercepts requests, bypassing authentication for WebSocket and API documentation endpoints.
-     * It extracts JWT tokens from headers or cookies, validates access tokens when present, and sets the Spring Security context for authenticated requests.
-     * If no valid tokens are found, or for specific endpoints, the request proceeds without authentication.
-     *
-     * @param request the HTTP request
-     * @param response the HTTP response
-     * @param filterChain the filter chain to continue processing
-     * @throws ServletException if an error occurs during filtering
-     * @throws IOException if an I/O error occurs during filtering
-     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         log.info("JWT 필터");
@@ -100,23 +87,10 @@ public class JWTFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Retrieves the access token from the "Authorization" header of the HTTP request.
-     *
-     * @param request the incoming HTTP request
-     * @return the value of the "Authorization" header, or null if not present
-     */
     private String getAccessTokenFromHeader(HttpServletRequest request) {
         return request.getHeader("Authorization");
     }
 
-    /**
-     * Determines if the request is a general authenticated request based on token presence.
-     *
-     * @param authorization the access token from the Authorization header, or null if absent
-     * @param refreshToken the refresh token from cookies, or null if absent
-     * @return true if only the access token is present and the refresh token is absent
-     */
     private static boolean isGeneralRequest(String authorization, String refreshToken) {
         return authorization != null && refreshToken == null;
     }
@@ -125,24 +99,10 @@ public class JWTFilter extends OncePerRequestFilter {
         return refreshToken != null && authorization == null;
     }
 
-    /**
-     * Determines whether the request is for login or signup based on the absence of both access and refresh tokens.
-     *
-     * @param accessToken the access token, or null if not present
-     * @param refreshToken the refresh token, or null if not present
-     * @return true if both tokens are absent, indicating a login or signup request; false otherwise
-     */
     private static boolean isLoginOrSignUpRequest(String accessToken, String refreshToken) {
         return accessToken == null && refreshToken == null;
     }
 
-    /**
-     * Sets the Spring Security context with authentication details extracted from the provided access token and continues the filter chain.
-     *
-     * @param accessToken the JWT access token used to extract user authentication information
-     * @throws IOException if an input or output error occurs during filter processing
-     * @throws ServletException if the filter chain fails
-     */
     private void setSecurityContext(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String accessToken) throws IOException, ServletException {
         log.info("인증완료 SecurityContextHolder 설정");
 

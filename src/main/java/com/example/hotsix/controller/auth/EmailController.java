@@ -44,12 +44,6 @@ public class EmailController {
                 .build();
     }
 
-    /**
-     * Handles email-based login by validating the provided code, issuing authentication cookies, and redirecting the user after successful login.
-     *
-     * @param code the access token received via email for authentication
-     * @param response the HTTP response used to set authentication cookies and perform the redirect
-     */
     @GetMapping("/email-login")
     public void emailLogin(@RequestParam("code") String code, HttpServletResponse response){
         try{
@@ -68,14 +62,6 @@ public class EmailController {
         }
     }
 
-    /**
-     * Handles email-based registration by validating the provided code and redirecting the user.
-     *
-     * Validates the access token from the code parameter, extracts the associated email, and redirects the client to the registration page with the email as a query parameter. If validation fails, logs the exception and redirects to the root path.
-     *
-     * @param code the access token received via email for registration
-     * @param response the HTTP response used for redirection
-     */
     @GetMapping("/register")
     public void register(@RequestParam("code") String code, HttpServletResponse response){
         try{

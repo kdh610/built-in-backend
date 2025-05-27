@@ -29,123 +29,54 @@ public class JWTUtil {
     private final RedisTokenService redisTokenService;
     private final SecretKey secretKey;
 
-    /****
-     * Constructs a JWT utility with the specified secret key and Redis token service.
-     *
-     * @param secret the secret string used to generate the cryptographic signing key
-     * @param redisTokenService the service for managing token state in Redis
-     */
     public JWTUtil(@Value("${jwt.salt}")String secret, RedisTokenService redisTokenService){
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.redisTokenService = redisTokenService;
     }
 
-    /**
-     * Extracts the "username" claim from the provided JWT.
-     *
-     * @param token the JWT from which to extract the username
-     * @return the username claim value, or null if not present
-     */
     public String getUsername(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
     }
 
-    /**
-     * Extracts the "name" claim from the provided JWT.
-     *
-     * @param token the JWT from which to extract the name
-     * @return the value of the "name" claim, or null if not present
-     */
     public String getName(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("name", String.class);
     }
 
-    /****
-     * Extracts the "role" claim from the provided JWT.
-     *
-     * @param token the JWT from which to extract the role
-     * @return the value of the "role" claim, or null if not present
-     */
     public String getRole(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
     }
 
-    /**
-     * Extracts the "id" claim as a Long from the specified JWT.
-     *
-     * @param token the JWT from which to extract the "id" claim
-     * @return the value of the "id" claim, or null if not present
-     */
     public Long getId(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("id", Long.class);
     }
 
-    /**
-     * Extracts the "email" claim from the given JWT, removing any surrounding quotes.
-     *
-     * @param token the JWT from which to extract the email claim
-     * @return the email address contained in the token, without quotes
-     */
     public String getEmail(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("email", String.class)
                 .replace("\"", "");
     }
 
-    /**
-     * Validates an access token by checking if it is not blacklisted, structurally valid, and of type "access".
-     *
-     * @param accessToken the JWT access token to validate
-     * @throws BuiltInException if the token is blacklisted, invalid, expired, or not an access token
-     */
     public void validateAccessToken(String accessToken) {
         isBlackListToken(accessToken);
         validateToken(accessToken);
         isTokenTypeAccess(accessToken);
     }
 
-    /**
-     * Validates a refresh token by checking its structure, type, and logout status.
-     *
-     * This method ensures the provided token is a valid, unexpired JWT of type "refresh" and has not been logged out (i.e., is present in Redis).
-     *
-     * @param refresh the refresh token to validate
-     * @throws BuiltInException if the token is invalid, expired, not a refresh token, or has been logged out
-     */
     public void validateRefreshToken(String refresh) {
         validateToken(refresh);
         isTokenTypeRefresh(refresh);
         isLoggedOutRefreshToken(refresh);
     }
 
-    /****
-     * Checks if the provided refresh token is present in Redis, indicating it is not logged out.
-     *
-     * @param refresh the refresh token to check
-     * @throws BuiltInException if the token is not found in Redis, indicating it has been logged out or is invalid
-     */
     private void isLoggedOutRefreshToken(String refresh) {
         if(!redisTokenService.isTokenInRedis(getId(refresh).toString()))
             throw new BuiltInException(Process.INVALID_TOKEN);
     }
 
-    /****
-     * Checks if the provided access token is blacklisted in Redis and throws an exception if it is.
-     *
-     * @param accessToken the JWT access token to check
-     * @throws BuiltInException if the token is found in the Redis blacklist
-     */
     private void isBlackListToken(String accessToken) {
         if(redisTokenService.isTokenInRedis(accessToken))
             throw new BuiltInException(Process.INVALID_TOKEN);
     }
 
-    /**
-     * Validates the structure, signature, and expiration of a JWT token.
-     *
-     * @param token the JWT token to validate
-     * @return true if the token is valid; false if the token is null
-     * @throws BuiltInException if the token is invalid, expired, unsupported, or malformed
-     */
     public Boolean validateToken(String token) {
         log.info("[JWTUtil] 토큰 만료 검증");
         try {
@@ -224,12 +155,6 @@ public class JWTUtil {
                 .compact();
     }
 
-    /**
-     * Creates a JWT containing only the email claim with a fixed expiration of 3 days.
-     *
-     * @param email the email address to include in the token
-     * @return a signed JWT string with the email claim and 3-day validity
-     */
     public String createEmailJwt(String email){
         return Jwts.builder()
                 .claim("email",email)
@@ -239,13 +164,6 @@ public class JWTUtil {
                 .compact();
     }
 
-    /**
-     * Retrieves a token value from the HTTP request cookies that matches the specified token type.
-     *
-     * @param request the HTTP servlet request containing cookies
-     * @param cookieName the token type to search for in the cookies
-     * @return an {@code Optional} containing the token value if found, or empty if not present
-     */
     public Optional<String> getTokenFromCookie(HttpServletRequest request, TokenType cookieName) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {

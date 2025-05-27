@@ -1,3 +1,4 @@
+
 package com.example.hotsix.controller.auth;
 
 
@@ -22,15 +23,6 @@ public class ReissueController {
     private final ReissueService reissueService;
     private final JWTUtil jwtUtil;
 
-    /**
-     * Handles HTTP POST requests to reissue an access token using a refresh token from cookies.
-     *
-     * Extracts the refresh token from the request cookies, validates it, and generates a new access token.
-     * The new access token is set in the response header and returned in the response body.
-     *
-     * @return a {@link ReissueResponse} containing the new access token
-     * @throws BuiltInException if the refresh token is missing or invalid
-     */
     @PostMapping("/reissue")
     public ReissueResponse reissue(HttpServletRequest request, HttpServletResponse response) {
         log.info("reissue");
