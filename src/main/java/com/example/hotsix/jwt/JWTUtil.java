@@ -56,9 +56,9 @@ public class JWTUtil {
     }
 
     public void validateAccessToken(String accessToken) {
-        isBlackListToken(accessToken);
         validateToken(accessToken);
         isTokenTypeAccess(accessToken);
+        isBlackListToken(accessToken);
     }
 
     public void validateRefreshToken(String refresh) {
