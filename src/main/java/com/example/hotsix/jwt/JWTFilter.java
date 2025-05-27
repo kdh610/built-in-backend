@@ -49,7 +49,7 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
 
-        String refreshToken = getRefreshToken(request);
+        String refreshToken = jwtUtil.getTokenFromCookie(request,TokenType.REFRESH).orElse(null);
         String accessToken = getAccessTokenFromHeader(request);
         log.info("accessToken: {}", accessToken);
         log.info("refreshToken: {}", refreshToken);
@@ -76,7 +76,7 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         // 처음 로그인시 accessToken을 쿠키에서 헤더로 이동
-        accessToken = getAccessToeknFromCookie(request);
+        accessToken = jwtUtil.getTokenFromCookie(request,TokenType.ACCESS).orElse(null);
         if(accessToken!=null){
             log.info("처음 로그인 JWT 필터 끝");
             setSecurityContext(request, response, filterChain, accessToken);
@@ -124,33 +124,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private String getAccessTokenFromHeader(HttpServletRequest request) {
         return request.getHeader("Authorization");
-    }
-
-    private String getAccessToeknFromCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("access")) {
-                    String accessToekn = cookie.getValue();
-                    log.info("accessToekn token: {}", accessToekn);
-                    return accessToekn;
-                }
-            }
-        }
-        return null;
-    }
-
-    private String getRefreshToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("refresh")) {
-                    String refreshToken = cookie.getValue();
-                    return refreshToken;
-                }
-            }
-        }
-        return null;
     }
 
     private void setSecurityContext(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String accessToken) throws IOException, ServletException {

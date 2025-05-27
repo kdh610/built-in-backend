@@ -36,59 +36,36 @@ public class CustomLogoutFilter extends GenericFilterBean {
     private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         log.info("로그아웃 필터");
         log.info("request url: {}", request.getRequestURI());
-        String requestURI = request.getRequestURI();
-        if(!requestURI.matches("^/.*logout$")){
+
+        if(!request.getRequestURI().matches("^/.*logout$")){
             log.info("/logout 요청이 아님");
             filterChain.doFilter(request, response);
             return;
         }
-        String method = request.getMethod();
-        if(!method.equals("POST")){
+        if(!request.getMethod().equals("POST")){
             filterChain.doFilter(request, response);
             return;
         }
 
         
         //  access토큰 redis에 블랙리스트 처리
-        String access = null;
-        access = request.getHeader("Authorization");
+        String access = request.getHeader("Authorization");
         log.info("access: {}", access);
         if(access != null){
             log.info("access토큰 블랙리스트 처리");
             try{
+                jwtUtil.validateToken(access);
                 long remainingTime = jwtUtil.getRemainingTime(access);
                 redisTokenService.blacklistAccessToken(access, remainingTime);
-                //redisTemplate.opsForValue().set(access,"logout", remainingTime, TimeUnit.MILLISECONDS);
-            }catch (ExpiredJwtException e){
-                //response body
+            }catch (BuiltInException e){
                 log.info("Access 토큰 만료");
-
-//                PrintWriter writer = response.getWriter();
-//                writer.println("access toekn is expired");
-//                response.setStatus(HttpServletResponse.SC_OK);
-                BuiltInException exception = new BuiltInException(Process.NORMAL_RESPONSE);
-                jwtExceptionHandler(response,exception);
-                return;
-            }catch( IllegalArgumentException e){
-                BuiltInException exception = new BuiltInException(Process.NORMAL_RESPONSE);
-                jwtExceptionHandler(response,exception);
+                jwtExceptionHandler(response,e);
                 return;
             }
-
-
         }
 
 
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
-//        log.info("cookies: {}", cookies);
-        for (Cookie cookie : cookies) {
-            if(cookie.getName().equals("refresh")){
-                log.info("refresh cookies: {}", cookie.getName());
-                refresh = cookie.getValue();
-
-            }
-        }
+        String refresh = jwtUtil.getTokenFromCookie(request,TokenType.REFRESH).orElse(null);
 
         if(refresh==null){
             response.setStatus(HttpServletResponse.SC_OK);
@@ -118,7 +95,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .process(error.getProcess())
                 .build();
-        log.info("errorResponse: {}", errorResponse.getProcess());
+
         APIResponse<Object> apiResponse = APIResponse.builder()
                 .process(ProcessResponse.from(errorResponse.getProcess()))
                 .build();
@@ -129,9 +106,8 @@ public class CustomLogoutFilter extends GenericFilterBean {
         response.setCharacterEncoding("UTF-8");
         try {
             String json = new ObjectMapper().writeValueAsString(apiResponse);
-            log.info("json: {}", json);
             response.getWriter().write(json);
-            return;
+
         } catch (Exception e) {
             log.error(e.getMessage());
         }

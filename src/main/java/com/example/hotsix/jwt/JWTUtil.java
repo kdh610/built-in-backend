@@ -7,6 +7,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -139,6 +142,18 @@ public class JWTUtil {
                 .compact();
     }
 
+    public Optional<String> getTokenFromCookie(HttpServletRequest request, TokenType cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return Optional.empty();
+        }
+        for (Cookie cookie : cookies) {
+            if (cookieName.getTokenType().equals(cookie.getName())) {
+                return Optional.ofNullable(cookie.getValue());
+            }
+        }
+        return Optional.empty();
+    }
 
 
 }
