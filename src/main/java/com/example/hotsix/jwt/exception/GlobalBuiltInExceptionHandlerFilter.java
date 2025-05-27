@@ -25,7 +25,7 @@ public class GlobalBuiltInExceptionHandlerFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
-            filterChain.doFilter(request, response); // 다음 필터 호출
+            filterChain.doFilter(request, response);
         } catch (BuiltInException ex) {
             log.warn("GlobalBuiltInExceptionHandlerFilter에서 BuiltInException 처리: {}", ex.getMessage());
             handleBuiltInException(response, ex);
@@ -45,7 +45,6 @@ public class GlobalBuiltInExceptionHandlerFilter extends OncePerRequestFilter {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // try-with-resources를 사용하거나, ObjectMapper를 필드 멤버로 두고 재사용하는 것이 좋습니다.
         String json = objectMapper.writeValueAsString(apiResponse);
         response.getWriter().write(json);
     }
