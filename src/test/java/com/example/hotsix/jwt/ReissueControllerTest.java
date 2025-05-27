@@ -2,7 +2,10 @@ package com.example.hotsix.jwt;
 
 import com.example.hotsix.controller.auth.ReissueController;
 import com.example.hotsix.dto.member.MemberDto;
+import com.example.hotsix.enums.Process;
+import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.service.auth.RedisTokenService;
+import com.example.hotsix.service.auth.ReissueService;
 import com.example.hotsix.service.storage.StorageService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -30,9 +33,7 @@ public class ReissueControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @MockBean
-    private JWTUtil jwtUtil;
-    @MockBean
-    private RedisTokenService redisTokenService;
+    private ReissueService reissueService;
     @MockBean
     private StorageService storageService;
     @MockBean
@@ -42,26 +43,11 @@ public class ReissueControllerTest {
     @Test
     @DisplayName("AccessToken 재발행 테스트")
     void reissueAccessToken() throws Exception {
-
-        Long expectedUserId = 1L;
-        String expectedUsername = "testUser";
-        String expectedRole = "ROLE_USER";
-        String expectedName = "Test User Name";
-        String expectedEmail = "test@example.com";
         String refreshToken = "refreshToken";
         String newAccessToken = "newAccessToken";
         Cookie refresh = new Cookie("refresh", refreshToken);
 
-        Mockito.when(jwtUtil.getCategory(refreshToken)).thenReturn("refresh");
-        Mockito.when(jwtUtil.getId(refreshToken)).thenReturn(expectedUserId);
-        Mockito.when(jwtUtil.getUsername(refreshToken)).thenReturn(expectedUsername);
-        Mockito.when(jwtUtil.getRole(refreshToken)).thenReturn(expectedRole);
-        Mockito.when(jwtUtil.getName(refreshToken)).thenReturn(expectedName);
-        Mockito.when(jwtUtil.getEmail(refreshToken)).thenReturn(expectedEmail);
-        Mockito.when(redisTokenService.isTokenInRedis("1")).thenReturn(true);
-        Mockito.when(jwtUtil.createAccessToken(any(MemberDto.class), anyLong()))
-                .thenReturn(newAccessToken);
-
+        Mockito.when(reissueService.reissueAcessToken(refreshToken)).thenReturn(newAccessToken);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/reissue")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +59,6 @@ public class ReissueControllerTest {
                 .andExpect(jsonPath("$.process.message").value("정상적인 응답을 반환하였습니다"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.token").exists());
-
     }
 
     @Test
@@ -81,45 +66,7 @@ public class ReissueControllerTest {
     void expiredRefreshToken() throws Exception {
         String refreshToken = "refreshToken";
         Cookie refresh = new Cookie("refresh", refreshToken);
-
-        Mockito.when(jwtUtil.validateToken(refreshToken)).thenReturn(false);
-        Mockito.when(jwtUtil.getCategory(refreshToken)).thenReturn("refresh");
-
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/reissue")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .cookie(refresh)
-                        .with(csrf()))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.process").exists())
-                .andExpect(jsonPath("$.process.statusCode").value(401))
-                .andExpect(jsonPath("$.process.message").value("잘못된 JWT Token 입니다."))
-                .andExpect(jsonPath("$.data").doesNotExist());
-
-    }
-
-    @Test
-    @DisplayName("이미 로그아웃된 refreshToken 테스트")
-    void aleadyLogoutRefreshToken() throws Exception {
-        Long expectedUserId = 1L;
-        String expectedUsername = "testUser";
-        String expectedRole = "ROLE_USER";
-        String expectedName = "Test User Name";
-        String expectedEmail = "test@example.com";
-        String refreshToken = "refreshToken";
-        String newAccessToken = "newAccessToken";
-        Cookie refresh = new Cookie("refresh", refreshToken);
-
-        Mockito.when(jwtUtil.getCategory(refreshToken)).thenReturn("refresh");
-        Mockito.when(jwtUtil.getId(refreshToken)).thenReturn(expectedUserId);
-        Mockito.when(jwtUtil.getUsername(refreshToken)).thenReturn(expectedUsername);
-        Mockito.when(jwtUtil.getRole(refreshToken)).thenReturn(expectedRole);
-        Mockito.when(jwtUtil.getName(refreshToken)).thenReturn(expectedName);
-        Mockito.when(jwtUtil.getEmail(refreshToken)).thenReturn(expectedEmail);
-        Mockito.when(redisTokenService.isTokenInRedis("1")).thenReturn(false);
-        Mockito.when(jwtUtil.createAccessToken(any(MemberDto.class), anyLong()))
-                .thenReturn(newAccessToken);
-
+        Mockito.when(reissueService.reissueAcessToken(refreshToken)).thenThrow(new BuiltInException(Process.INVALID_TOKEN));
 
         mockMvc.perform(MockMvcRequestBuilders.post("/reissue")
                         .contentType(MediaType.APPLICATION_JSON)
