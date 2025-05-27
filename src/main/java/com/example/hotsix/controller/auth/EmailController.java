@@ -55,7 +55,7 @@ public class EmailController {
 
                 response.addCookie(cookies.get("access"));
                 response.addCookie(cookies.get("refresh"));
-                redirect(response,clinetHost+"/afterlogin");
+                redirect(response,"/afterlogin");
             }
         }catch (BuiltInException e){
             throw e;

@@ -50,7 +50,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
 
         String refreshToken = jwtUtil.getTokenFromCookie(request, TokenType.REFRESH).orElse(null);
-        String accessToken = getAccessTokenFromHeader(request);
+        String accessToken = jwtUtil.getTokenFromCookie(request,TokenType.ACCESS).orElse(getAccessTokenFromHeader(request));
+
         log.info("accessToken: {}", accessToken);
         log.info("refreshToken: {}", refreshToken);
 
@@ -63,26 +64,15 @@ public class JWTFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        else if(refreshToken != null && accessToken != null){
-            jwtUtil.validateAccessToken(accessToken);
-            setSecurityContext(request, response, filterChain, accessToken);
-            return;
-        }
 
         // 처음 로그인시 accessToken을 쿠키에서 헤더로 이동
-        accessToken = jwtUtil.getTokenFromCookie(request,TokenType.ACCESS).orElse(null);
         if(accessToken!=null){
             log.info("처음 로그인 JWT 필터 끝");
             setSecurityContext(request, response, filterChain, accessToken);
             return;
         }
 
-        if(isLoginOrSignUpRequest(accessToken, refreshToken)){
-            log.info("가입, 로그인 JWT 필터 끝");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
+        log.info("가입, 로그인 JWT 필터 끝");
         filterChain.doFilter(request, response);
     }
 
@@ -96,10 +86,6 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private static boolean isReissueRequest(String refreshToken, String authorization) {
         return refreshToken != null && authorization == null;
-    }
-
-    private static boolean isLoginOrSignUpRequest(String accessToken, String refreshToken) {
-        return accessToken == null && refreshToken == null;
     }
 
     private void setSecurityContext(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, String accessToken) throws IOException, ServletException {

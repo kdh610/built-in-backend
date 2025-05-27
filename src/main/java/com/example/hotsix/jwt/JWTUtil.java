@@ -171,6 +171,7 @@ public class JWTUtil {
         }
         for (Cookie cookie : cookies) {
             if (cookieName.getTokenType().equals(cookie.getName())) {
+                log.info("getFrom cookie {} {}",cookieName.getTokenType(), cookie.getValue());
                 return Optional.ofNullable(cookie.getValue());
             }
         }
