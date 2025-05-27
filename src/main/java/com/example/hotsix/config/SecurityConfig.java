@@ -37,7 +37,6 @@ public class SecurityConfig {
 
     private final GlobalBuiltInExceptionHandlerFilter globalBuiltInExceptionHandlerFilter;
 
-    //private final RedisTemplate<String ,String> redisTemplate;
     private final RedisTokenService redisTokenService;
 
     @Value("${client.host}")
@@ -85,11 +84,6 @@ public class SecurityConfig {
                         .userInfoEndpoint((userInfoEndpointConfig -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService)))
                         .successHandler(customSuccessHandler));
-
-        //인증실패시
-//        http.
-//                exceptionHandling(exceptionHandling -> exceptionHandling
-//                        .authenticationEntryPoint(customAuthenticationEntryPoint));
 
 
         // 경로별 인가 작업
