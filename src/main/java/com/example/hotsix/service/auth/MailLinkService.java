@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import static org.springframework.security.core.context.SecurityContextHolder.setContext;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor

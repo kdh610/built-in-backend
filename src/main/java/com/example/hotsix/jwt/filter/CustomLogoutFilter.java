@@ -1,14 +1,10 @@
 package com.example.hotsix.jwt.filter;
 
-import com.example.hotsix.dto.common.APIResponse;
-import com.example.hotsix.dto.common.ErrorResponse;
-import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.jwt.TokenType;
 import com.example.hotsix.service.auth.RedisTokenService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -35,11 +31,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
     }
 
     private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        log.info("로그아웃 필터");
-        log.info("request url: {}", request.getRequestURI());
-
         if(!request.getRequestURI().matches("^/.*logout$")){
-            log.info("/logout 요청이 아님");
             filterChain.doFilter(request, response);
             return;
         }
