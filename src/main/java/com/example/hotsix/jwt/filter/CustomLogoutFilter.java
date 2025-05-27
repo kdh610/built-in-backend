@@ -1,14 +1,10 @@
 package com.example.hotsix.jwt.filter;
 
-import com.example.hotsix.dto.common.APIResponse;
-import com.example.hotsix.dto.common.ErrorResponse;
-import com.example.hotsix.dto.common.ProcessResponse;
 import com.example.hotsix.enums.Process;
 import com.example.hotsix.exception.BuiltInException;
 import com.example.hotsix.jwt.JWTUtil;
 import com.example.hotsix.jwt.TokenType;
 import com.example.hotsix.service.auth.RedisTokenService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
