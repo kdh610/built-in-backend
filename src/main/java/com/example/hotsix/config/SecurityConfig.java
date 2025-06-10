@@ -76,7 +76,7 @@ public class SecurityConfig {
 
         // JWTFilter 추가   UsernamePasswordFilter 이전에 등록
         http
-                .addFilterBefore(new JWTFilter(jwtUtil, redisTokenService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         // oauth2
         http
